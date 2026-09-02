@@ -70,4 +70,11 @@ int main(void)
     int *p; // p is a pointer, but is uninitialized and points to garbage
 
     p = &j; // p is assigned the address of i--p now "points to" i
+
+    // 5.3 dereference pointer
+    // grab the data stored at pointed address
+    *p = 20; // the thing p points to (namely j!) is now 20!!
+
+    printf("j is %d\n", j);  // prints "20"
+    printf("j is %d\n", *p); // "20"! dereference-p is the same as j!
 }
