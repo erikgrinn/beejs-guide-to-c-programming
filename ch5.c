@@ -49,6 +49,8 @@
 
 // Well, by a shocking surprise that must come as something of a shock to you, gentle reader, we use the address-of operator (which happens to be an ampersand: “&”)to find the address of the data. Ampersand.
 
+void increment(int *p);
+
 int main(void)
 {
 
@@ -67,7 +69,7 @@ int main(void)
     //  int *p; // p's type is "pointer to an int", or "int-pointer"
 
     int j;
-    int *p; // p is a pointer, but is uninitialized and points to garbage
+    int *p; // p is a pointer, but is uninitialized and points to garbage - this is NOT a dereference--this is a type "int*"
 
     p = &j; // p is assigned the address of i--p now "points to" i
 
@@ -77,4 +79,34 @@ int main(void)
 
     printf("j is %d\n", j);  // prints "20"
     printf("j is %d\n", *p); // "20"! dereference-p is the same as j!
+
+    // 5.4
+    int *k = &i;                  // k is pointer to address of i
+    printf("i is %d\n", i);       // prints "10"
+    printf("i is also %d\n", *k); // prints "10"
+    increment(k);
+
+    printf("i is %d\n", i);
+
+    // another way (comment above to output 10 and 11):
+    printf("i is %d\n", i); // prints "10"
+    increment(&i);
+    printf("i is %d\n", i); // prints "11"!
+
+    // 5.7 sizeof
+    // int *p;
+
+    // Prints size of an 'int'
+    printf("%zu\n", sizeof(int));
+
+    // p is type 'int *', so prints size of 'int*' - this is 8 bytes (32 bits): virtual address as learned in GIOS
+    printf("%zu\n", sizeof p);
+
+    // *p is type 'int', so prints size of 'int'
+    printf("%zu\n", sizeof *p);
+}
+// 5.4
+void increment(int *p)
+{
+    *p = *p + 1; // add one to the thing p points to
 }
