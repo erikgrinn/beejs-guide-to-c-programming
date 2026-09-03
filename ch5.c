@@ -100,6 +100,7 @@ int main(void)
     printf("%zu\n", sizeof(int));
 
     // p is type 'int *', so prints size of 'int*' - this is 8 bytes (32 bits): virtual address as learned in GIOS
+    // note that all pointer types on same cpu architecture will be the same (in our case 8 bytes)
     printf("%zu\n", sizeof p);
 
     // *p is type 'int', so prints size of 'int'
