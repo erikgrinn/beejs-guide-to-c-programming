@@ -1,4 +1,6 @@
-#define _GNU_SOURCE
+#define _GNU_SOURCE // to fix codespace linting/intellisense
+// can also use below for more direct target:
+//  #define _POSIX_C_SOURCE 200112L  // Unlocks getaddrinfo and modern sockets
 
 #include <stdio.h>
 #include <stdlib.h>
