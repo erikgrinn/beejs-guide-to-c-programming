@@ -236,4 +236,43 @@ int main(void)
     // .
     // .
     // Again, note that we will use the socket descriptor new_fd for all send() and recv() calls. If you’re only getting one single connection ever, you can close() the listening sockfd in order to prevent more incoming connections on the same port, if you so desire.
+
+    //  5.7 send() and recv()—Talk to me, baby!
+    // These two functions are for communicating over stream sockets or connected datagram sockets. If you want to use regular unconnected datagram sockets, you’ll need to see the section on sendto() and recvfrom(), below.
+
+    // Here’s something that might (or might not) be new to you: these are blocking calls. That is, recv() will block until there is some data ready to receive. “But what does ‘block’ mean, already?!” It means your program is going to stop there, on that system call, until someone sends you something. (The OS techie jargon for “stop” in that sentence is actually sleep, so I might use those terms interchangeably.) send() can also block if the stuff you’re sending is all jammed up somehow, but that’s rarer. We’ll revisit this concept later, and talk about how to avoid it when you need to.
+
+    // Here’s the send() call:
+
+    // int send(int sockfd, const void *msg, int len, int flags); used but outdated
+    ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+
+    // sockfd is the socket descriptor you want to send data to (whether it’s the one returned by socket() or the one you got with accept()). msg is a pointer to the data you want to send, and len is the length of that data in bytes. Just set flags to 0. (See the send() man page for more information concerning flags.)
+
+    // Some sample code might be:
+
+    char *msg = "Beej was here!";
+    int len, bytes_sent;
+    // .
+    // .
+    // .
+    len = strlen(msg);
+    bytes_sent = send(sockfd, msg, len, 0);
+    // .
+    // .
+    // .
+    // send() returns the number of bytes actually sent out—this might be less than the number you told it to send! See, sometimes you tell it to send a whole gob of data and it just can’t handle it. It’ll fire off as much of the data as it can, and trust you to send the rest later. Remember, if the value returned by send() doesn’t match the value in len, it’s up to you to send the rest of the string. The good news is this: if the packet is small (less than 1K or so) it will probably manage to send the whole thing all in one go. Again, -1 is returned on error, and errno is set to the error number.
+
+    // The recv() call is similar in many respects:
+
+    // int recv(int sockfd, void *buf, int len, int flags); used but outdated
+    ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+    // sockfd is the socket descriptor to read from, buf is the buffer to read the information into, len is the maximum length of the buffer, and flags can again be set to 0. (See the recv() man page for flag information.)
+
+    // recv() returns the number of bytes actually read into the buffer, or -1 on error (with errno set, accordingly).
+
+    // Wait! recv() can return 0. This can mean only one thing: the remote side has closed the connection on you! A return value of 0 is recv()’s way of letting you know this has occurred.
+
+    // There, that was easy, wasn’t it? You can now pass data back and forth on stream sockets! Whee! You’re a Unix Network Programmer!
+
 }
