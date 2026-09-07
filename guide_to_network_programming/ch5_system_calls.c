@@ -11,7 +11,7 @@
 
 int main(void)
 {
-    // 5.1 getaddrinfo()
+    // 5.1 getaddrinfo() - Prepare to Launch
     // This is a real workhorse of a function with a lot of options, but usage is actually pretty simple. It helps set up the structs you need later on.
 
     // A tiny bit of history: it used to be that you would use a function called gethostbyname() to do DNS lookups. Then you’d load that information by hand into a struct sockaddr_in, and use that in your calls.
@@ -51,20 +51,75 @@ int main(void)
 
     // Here’s a sample call if you’re a client who wants to connect to a particular server, say “www.example.net” port 3490. Again, this doesn’t actually connect, but it sets up the structures we’ll use later:
 
-    // int status;
-    // struct addrinfo hints;
-    // struct addrinfo *servinfo;  // will point to the results
+    int status1;
+    struct addrinfo hints1;
+    struct addrinfo *servinfo1; // will point to the results
 
-    // memset(&hints, 0, sizeof hints); // make sure the struct is empty
-    // hints.ai_family = AF_UNSPEC;     // don't care IPv4 or IPv6
-    // hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
+    memset(&hints1, 0, sizeof hints1); // make sure the struct is empty
+    hints1.ai_family = AF_UNSPEC;      // don't care IPv4 or IPv6
+    hints1.ai_socktype = SOCK_STREAM;  // TCP stream sockets
 
     // get ready to connect
-    status = getaddrinfo("www.example.net", "3490", &hints, &servinfo);
+    status1 = getaddrinfo("www.example.net", "3490", &hints1, &servinfo1);
 
     // servinfo now points to a linked list of 1 or more
     // struct addrinfos
 
     // etc.
-    freeaddrinfo(servinfo); // free the linked-list
+    freeaddrinfo(servinfo1); // free the linked-list
+
+    // 5.2 socket() - Get the File Descriptor
+    int socket(int domain, int type, int protocol);
+    // But what are these arguments? They allow you to say what kind of socket you want (IPv4 or IPv6, stream or datagram, and TCP or UDP).
+
+    // What you really want to do is use the values from the results of the call to getaddrinfo(), and feed them into socket() directly like this:
+    int s;
+    struct addrinfo hints2, *res2;
+    memset(&hints2, 0, sizeof hints2);
+    hints2.ai_family = AF_UNSPEC;
+    hints2.ai_socktype = SOCK_STREAM;
+
+    // do the lookup
+    // [pretend we already filled out the "hints" struct]
+    getaddrinfo("www.example.com", "http", &hints2, &res2);
+
+    // again, you should do error-checking on getaddrinfo(), and walk
+    // the "res" linked list looking for valid entries instead of just
+    // assuming the first one is good (like many of these examples do).
+    // See the section on client/server for real examples.
+
+    s = socket(res2->ai_family, res2->ai_socktype, res2->ai_protocol);
+
+    freeaddrinfo(res2);
+
+    // socket() simply returns to you a socket descriptor that you can use in later system calls, or -1 on error. The global variable errno is set to the error’s value (see the errno man page for more details, and a quick note on using errno in multithreaded programs).
+    // Fine, fine, fine, but what good is this socket? The answer is that it’s really no good by itself, and you need to read on and make more system calls for it to make any sense.
+
+    // 5.3 bind() — What port am I on?
+    // Once you have a socket, you might have to associate that socket with a port on your local machine. (This is commonly done if you’re going to listen() for incoming connections on a specific port—multiplayer network games do this when they tell you to “connect to 192.168.5.10 port 3490”.) The port number is used by the kernel to match an incoming packet to a certain process’s socket descriptor. If you’re going to only be doing a connect() (because you’re the client, not the server), this is probably unnecessary. Read it anyway, just for kicks.
+    // int bind(int sockfd, struct sockaddr *my_addr, int addrlen); - this is outdated and shows warning/error
+    int bind(int sockfd, const struct sockaddr *my_addr, socklen_t addrlen);
+
+    // sockfd is the socket file descriptor returned by socket(). my_addr is a pointer to a struct sockaddr that contains information about your address, namely, port and IP address. addrlen is the length in bytes of that address.
+
+    // Whew. That’s a bit to absorb in one chunk. Let’s have an example that binds the socket to the host the program is running on, port 3490:
+    struct addrinfo hints3, *res3;
+    int sockfd;
+
+    // first, load up address structs with getaddrinfo():
+
+    memset(&hints3, 0, sizeof hints3);
+    hints3.ai_family = AF_UNSPEC; // use IPv4 or IPv6, whichever
+    hints3.ai_socktype = SOCK_STREAM;
+    hints3.ai_flags = AI_PASSIVE; // fill in my IP for me
+
+    getaddrinfo(NULL, "3490", &hints3, &res3);
+
+    // make a socket:
+
+    sockfd = socket(res3->ai_family, res3->ai_socktype, res3->ai_protocol);
+
+    // bind it to the port we passed in to getaddrinfo():
+
+    bind(sockfd, res3->ai_addr, res3->ai_addrlen);
 }
