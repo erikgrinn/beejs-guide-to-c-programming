@@ -275,4 +275,36 @@ int main(void)
 
     // There, that was easy, wasn’t it? You can now pass data back and forth on stream sockets! Whee! You’re a Unix Network Programmer!
 
+    //     5.8 sendto() and recvfrom()—Talk to me, DGRAM-style
+    // “This is all fine and dandy,” I hear you saying, “but where does this leave me with unconnected datagram sockets?” No problemo, amigo. We have just the thing.
+
+    // Since datagram sockets aren’t connected to a remote host, guess which piece of information we need to give before we send a packet? That’s right! The destination address! Here’s the scoop:
+
+    // int sendto(int sockfd, const void *msg, int len, unsigned int flags,
+    //            const struct sockaddr *to, socklen_t tolen); used but outdated
+    ssize_t sendto(int sockfd, const void *buf, size_t len, int flags,
+                   const struct sockaddr *dest_addr, socklen_t addrlen);
+
+    // As you can see, this call is basically the same as the call to send() with the addition of two other pieces of information. to is a pointer to a struct sockaddr (which will probably be another struct sockaddr_in or struct sockaddr_in6 or struct sockaddr_storage that you cast at the last minute) which contains the destination IP address and port. tolen, an int deep-down, can simply be set to sizeof *to or sizeof(struct sockaddr_storage).
+
+    // To get your hands on the destination address structure, you’ll probably either get it from getaddrinfo(), or from recvfrom(), below, or you’ll fill it out by hand.
+
+    // Just like with send(), sendto() returns the number of bytes actually sent (which, again, might be less than the number of bytes you told it to send!), or -1 on error.
+
+    // Equally similar are recv() and recvfrom(). The synopsis of recvfrom() is:
+
+    // int recvfrom(int sockfd, void *buf, int len, unsigned int flags,
+    //              struct sockaddr *from, int *fromlen); used but outdated
+    ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags,
+                     struct sockaddr *src_addr, socklen_t *addrlen);
+
+    // Again, this is just like recv() with the addition of a couple fields. from is a pointer to a local struct sockaddr_storage that will be filled with the IP address and port of the originating machine. fromlen is a pointer to a local int that should be initialized to sizeof *from or sizeof(struct sockaddr_storage). When the function returns, fromlen will contain the length of the address actually stored in from.
+
+    // recvfrom() returns the number of bytes received, or -1 on error (with errno set accordingly).
+
+    // So, here’s a question: why do we use struct sockaddr_storage as the socket type? Why not struct sockaddr_in? Because, you see, we want to not tie ourselves down to IPv4 or IPv6. So we use the generic struct sockaddr_storage which we know will be big enough for either.
+
+    // (So… here’s another question: why isn’t struct sockaddr itself big enough for any address? We even cast the general-purpose struct sockaddr_storage to the general-purpose struct sockaddr! Seems extraneous and redundant, huh? The answer is, it just isn’t big enough, and I’d guess that changing it at this point would be Problematic. So they made a new one.)
+
+    // Remember, if you connect() a datagram socket, you can then simply use send() and recv() for all your transactions. The socket itself is still a datagram socket and the packets still use UDP, but the socket interface will automatically add the destination and source information for you.
 }
