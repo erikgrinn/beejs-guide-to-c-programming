@@ -238,7 +238,7 @@ int main(void)
     // .
     // Again, note that we will use the socket descriptor new_fd for all send() and recv() calls. If you’re only getting one single connection ever, you can close() the listening sockfd in order to prevent more incoming connections on the same port, if you so desire.
 
-    //  5.7 send() and recv()—Talk to me, baby!
+    //  5.7 send() and recv()—Talk to me, baby! - TCP
     // These two functions are for communicating over stream sockets or connected datagram sockets. If you want to use regular unconnected datagram sockets, you’ll need to see the section on sendto() and recvfrom(), below.
 
     // Here’s something that might (or might not) be new to you: these are blocking calls. That is, recv() will block until there is some data ready to receive. “But what does ‘block’ mean, already?!” It means your program is going to stop there, on that system call, until someone sends you something. (The OS techie jargon for “stop” in that sentence is actually sleep, so I might use those terms interchangeably.) send() can also block if the stuff you’re sending is all jammed up somehow, but that’s rarer. We’ll revisit this concept later, and talk about how to avoid it when you need to.
@@ -276,7 +276,7 @@ int main(void)
 
     // There, that was easy, wasn’t it? You can now pass data back and forth on stream sockets! Whee! You’re a Unix Network Programmer!
 
-    //     5.8 sendto() and recvfrom()—Talk to me, DGRAM-style
+    //     5.8 sendto() and recvfrom()—Talk to me, DGRAM-style - UDP
     // “This is all fine and dandy,” I hear you saying, “but where does this leave me with unconnected datagram sockets?” No problemo, amigo. We have just the thing.
 
     // Since datagram sockets aren’t connected to a remote host, guess which piece of information we need to give before we send a packet? That’s right! The destination address! Here’s the scoop:
