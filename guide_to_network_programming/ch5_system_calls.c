@@ -163,4 +163,26 @@ int main(void)
     //    Be sure to check the return value from connect()—it’ll return -1 on error and set the variable errno.
 
     //     Also, notice that we didn’t call bind().Basically, we don’t care about our local port number; we only care where we’re going (the remote port). The kernel will choose a local port for us, and the site we connect to will automatically get this information from us. No worries.
+
+    // 5.5 listen() — Will somebody please call me?
+    // OK, time for a change of pace. What if you don’t want to connect to a remote host. Say, just for kicks, that you want to wait for incoming connections and handle them in some way. The process is two step: first you listen(), then you accept() (see below).
+
+    // The listen() call is fairly simple, but requires a bit of explanation:
+
+    int listen(int sockfd, int backlog);
+    // sockfd is the usual socket file descriptor from the socket() system call. backlog is the number of connections allowed on the incoming queue. What does that mean? Well, incoming connections are going to wait in this queue until you accept() them (see below) and this is the limit on how many can queue up. Most systems silently limit this number to about 20; you can probably get away with setting it to 5 or 10.
+
+    // Again, as per usual, listen() returns -1 and sets errno on error.
+
+    // Well, as you can probably imagine, we need to call bind() before we call listen() so that the server is running on a specific port. (You have to be able to tell your buddies which port to connect to!) So if you’re going to be listening for incoming connections, the sequence of system calls you’ll make is:
+
+    // getaddrinfo();
+    // socket();
+    // bind();
+    // listen();
+    /* accept() goes here */
+    // I’ll just leave that in the place of sample code, since it’s fairly self-explanatory. (The code in the accept() section, below, is more complete.) The really tricky part of this whole sha-bang is the call to accept().
+
+    
+
 }
