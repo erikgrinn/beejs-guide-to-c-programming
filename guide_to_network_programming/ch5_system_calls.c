@@ -2,6 +2,10 @@
 // can also use below for more direct target:
 //  #define _POSIX_C_SOURCE 200112L  // Unlocks getaddrinfo and modern sockets
 
+// for accept/5.6:
+#define MYPORT "3490" // the port users will be connecting to
+#define BACKLOG 10    // how many pending connections queue holds
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -183,6 +187,53 @@ int main(void)
     /* accept() goes here */
     // I’ll just leave that in the place of sample code, since it’s fairly self-explanatory. (The code in the accept() section, below, is more complete.) The really tricky part of this whole sha-bang is the call to accept().
 
-    
+    // 5.6 accept()—“Thank you for calling port 3490.”
+    // Get ready—the accept() call is kinda weird! What’s going to happen is this: someone far far away will try to connect() to your machine on a port that you are listen()ing on. Their connection will be queued up waiting to be accept()ed. You call accept() and you tell it to get the pending connection. It’ll return to you a brand new socket file descriptor to use for this single connection! That’s right, suddenly you have two socket file descriptors for the price of one! The original one is still listening for more new connections, and the newly created one is finally ready to send() and recv(). We’re there!
 
+    // The call is as follows:
+
+    int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+    // sockfd is the listen()ing socket descriptor. Easy enough. addr will usually be a pointer to a local struct sockaddr_storage. This is where the information about the incoming connection will go (and with it you can determine which host is calling you from which port). addrlen is a local integer variable that should be set to sizeof(struct sockaddr_storage) before its address is passed to accept(). accept() will not put more than that many bytes into addr. If it puts fewer in, it’ll change the value of addrlen to reflect that.
+
+    // Guess what? accept() returns -1 and sets errno if an error occurs. Betcha didn’t figure that.
+
+    // Like before, this is a bunch to absorb in one chunk, so here’s a sample code fragment for your perusal:
+
+    // #define MYPORT "3490"  // the port users will be connecting to
+    // #define BACKLOG 10     // how many pending connections queue holds
+
+    struct sockaddr_storage their_addr;
+    socklen_t addr_size;
+    struct addrinfo hints5, *res5;
+    int sockfd2, new_fd;
+
+    // !! don't forget your error checking for these calls !!
+
+    // first, load up address structs with getaddrinfo():
+
+    memset(&hints5, 0, sizeof hints5);
+    hints5.ai_family = AF_UNSPEC; // use IPv4 or IPv6, whichever
+    hints5.ai_socktype = SOCK_STREAM;
+    hints5.ai_flags = AI_PASSIVE; // fill in my IP for me
+
+    getaddrinfo(NULL, MYPORT, &hints5, &res5);
+
+    // make a socket, bind it, and listen on it:
+
+    sockfd2 = socket(res5->ai_family, res5->ai_socktype,
+                     res5->ai_protocol);
+    bind(sockfd2, res5->ai_addr, res5->ai_addrlen);
+    listen(sockfd2, BACKLOG);
+
+    // now accept an incoming connection:
+
+    addr_size = sizeof their_addr;
+    new_fd = accept(sockfd2, (struct sockaddr *)&their_addr,
+                    &addr_size);
+
+    // ready to communicate on socket descriptor new_fd!
+    // .
+    // .
+    // .
+    // Again, note that we will use the socket descriptor new_fd for all send() and recv() calls. If you’re only getting one single connection ever, you can close() the listening sockfd in order to prevent more incoming connections on the same port, if you so desire.
 }
