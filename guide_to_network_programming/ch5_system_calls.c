@@ -14,6 +14,8 @@
 #include <netdb.h>
 #include <unistd.h> //for close, and gethostname()
 
+// **note, not all freeaddrinfo is setup. multiple sockets. careful when running (not meant to be run)
+
 int main(void)
 {
     // 5.1 getaddrinfo() - Prepare to Launch
