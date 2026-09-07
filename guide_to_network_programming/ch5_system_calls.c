@@ -123,4 +123,44 @@ int main(void)
 
     bind(sockfd, res3->ai_addr, res3->ai_addrlen);
     // One small extra final note about bind(): there are times when you won’t absolutely have to call it. If you are connect()ing to a remote machine and you don’t care what your local port is (as is the case with telnet where you only care about the remote port), you can simply call connect(), it’ll check to see if the socket is unbound, and will bind() it to an unused local port if necessary.
+
+    // 5.4 connect() - Hey you
+    // Let’s just pretend for a few minutes that you’re a telnet application. Your user commands you (just like in the movie TRON) to get a socket file descriptor. You comply and call socket(). Next, the user tells you to connect to “10.12.110.57” on port “23” (the standard telnet port). Yow! What do you do now?
+
+    // Lucky for you, program, you’re now perusing the section on connect()—how to connect to a remote host. So read furiously onward! No time to lose!
+
+    // The connect() call is as follows:
+
+    // int connect(int sockfd, struct sockaddr *serv_addr, int addrlen);  -used but outdated
+    int connect(int sockfd, const struct sockaddr *serv_addr, socklen_t addrlen); // sockfd is our friendly neighborhood socket file descriptor, as returned by the socket() call, serv_addr is a struct sockaddr containing the destination port and IP address, and addrlen is the length in bytes of the server address structure.
+
+    // All of this information can be gleaned from the results of the getaddrinfo() call, which rocks.
+
+    // Is this starting to make more sense
+    // ? I can’t hear you from here,
+    // so I’ll just have to hope that it is.Let’s have an example where we make a socket connection to “www.example.com”, port 3490 :
+
+    struct addrinfo hints4, *res4;
+    int sockfd1;
+
+    // first, load up address structs with getaddrinfo():
+
+    memset(&hints4, 0, sizeof hints4);
+    hints4.ai_family = AF_UNSPEC;
+    hints4.ai_socktype = SOCK_STREAM;
+
+    getaddrinfo("www.example.com", "3490", &hints4, &res4);
+
+    // make a socket:
+
+    sockfd1 = socket(res4->ai_family, res4->ai_socktype, res4->ai_protocol);
+
+    // connect!
+
+    connect(sockfd1, res4->ai_addr, res4->ai_addrlen);
+    //     Again, old - school programs filled out their own struct sockaddr_ins to pass to connect().You can do that if you want to.See the similar note in the bind() section, above.
+
+    //    Be sure to check the return value from connect()—it’ll return -1 on error and set the variable errno.
+
+    //     Also, notice that we didn’t call bind().Basically, we don’t care about our local port number; we only care where we’re going (the remote port). The kernel will choose a local port for us, and the site we connect to will automatically get this information from us. No worries.
 }
