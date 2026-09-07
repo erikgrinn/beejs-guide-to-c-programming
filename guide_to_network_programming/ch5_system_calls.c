@@ -122,4 +122,5 @@ int main(void)
     // bind it to the port we passed in to getaddrinfo():
 
     bind(sockfd, res3->ai_addr, res3->ai_addrlen);
+    // One small extra final note about bind(): there are times when you won’t absolutely have to call it. If you are connect()ing to a remote machine and you don’t care what your local port is (as is the case with telnet where you only care about the remote port), you can simply call connect(), it’ll check to see if the socket is unbound, and will bind() it to an unused local port if necessary.
 }
