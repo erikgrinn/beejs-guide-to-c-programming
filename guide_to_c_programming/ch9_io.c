@@ -235,7 +235,7 @@ int main(void)
 
     fp7 = fopen("output.bin", "rb"); // rb for "read binary"!
 
-    while (fread(&c, sizeof(char), 1, fp7) > 0)
+    while (fread(&c1, sizeof(char), 1, fp7) > 0)
         printf("%d\n", c1);
 
     fclose(fp7);
