@@ -179,4 +179,112 @@ int main(void)
     // Fun fact: since stdout is a file, you could replace line 8 with:
     // fp = stdout;
     // and the program would have outputted to the console instead of to a file. Try it!
+
+    //     9.6 Binary File I/O
+    // So far we’ve just been talking text files. But there’s that other beast we mentioned early on called binary files, or binary streams.
+
+    // These work very similarly to text files, except the I/O subsystem doesn’t perform any translations on the data like it might with a text file. With binary files, you get a raw stream of bytes, and that’s all.
+
+    // The big difference in opening the file is that you have to add a "b" to the mode. That is, to read a binary file, open it in "rb" mode. To write a file, open it in "wb" mode.
+
+    // Because it’s streams of bytes, and streams of bytes can contain NUL characters, and the NUL character is the end-of-string marker in C, it’s rare that people use the fprintf()-and-friends functions to operate on binary files.
+
+    // Instead the most common functions are fread() and fwrite(). The functions read and write a specified number of bytes to the stream.
+
+    // To demo, we’ll write a couple programs. One will write a sequence of byte values to disk all at once. And the second program will read a byte at a time and print them out78.
+
+    FILE *fp6;
+    unsigned char bytes[6] = {5, 37, 0, 88, 255, 12};
+
+    fp6 = fopen("output.bin", "wb"); // wb mode for "write binary"!
+
+    // In the call to fwrite, the arguments are:
+    //
+    // * Pointer to data to write
+    // * Size of each "piece" of data
+    // * Count of each "piece" of data
+    // * FILE*
+
+    fwrite(bytes, sizeof(char), 6, fp6);
+
+    fclose(fp6);
+
+    //     Those two middle arguments to fwrite() are pretty odd. But basically what we want to tell the function is, “We have items that are this big, and we want to write that many of them.” This makes it convenient if you have a record of a fixed length, and you have a bunch of them in an array. You can just tell it the size of one record and how many to write.
+
+    // In the example above, we tell it each record is the size of a char, and we have 6 of them.
+
+    // Running the program gives us a file output.bin, but opening it in a text editor doesn’t show anything friendly! It’s binary data—not text. And random binary data I just made up, at that!
+
+    // If I run it through a hex dump79 program, we can see the output as bytes:
+
+    // 05 25 00 58 ff 0c
+    // Many Unix systems ship with a program called hexdump to do this. You can use it like this with the -C (“canonical”) switch to get nice output:
+
+    // $ hexdump -C output.bin
+    // 00000000  05 25 00 58 ff 0c                              |.%.X..|
+    // The 00000000 is the offset within the file that this line of output starts on. The 05 25 00 58 ff 0c are the byte values (and this would be longer (up to 16 bytes per line) if there were more bytes in the file). And on the right between the pipe (|) symbols is hexdump’s best attempt to print out the characters that correspond to those bytes. It prints a period if the character is unprintable. In this case, since we’re just printing random binary data, this part of the output is just garbage. But if we’d printed an ASCII string to the file, we’d see that in there.
+
+    // And those values in hex do match up to the values (in decimal) that we wrote out.
+
+    // But now let’s try to read them back in with a different program. This one will open the file for binary reading ("rb" mode) and will read the bytes one at a time in a loop.
+
+    // fread() has the neat feature where it returns the number of bytes read, or 0 on EOF. So we can loop until we see that, printing numbers as we go.
+
+    FILE *fp7;
+    unsigned char c1;
+
+    fp7 = fopen("output.bin", "rb"); // rb for "read binary"!
+
+    while (fread(&c, sizeof(char), 1, fp7) > 0)
+        printf("%d\n", c1);
+
+    fclose(fp7);
+
+    //     And, running it, we see our original numbers!
+
+    // 5
+    // 37
+    // 0
+    // 88
+    // 255
+    // 12
+
+    //     9.6.1 struct and Number Caveats
+    // As we saw in the structs section, the compiler is free to add padding to a struct as it sees fit. And different compilers might do this differently. And the same compiler on different architectures could do it differently. And the same compiler on the same architectures could do it differently.
+
+    // What I’m getting at is this: it’s not portable to just fwrite() an entire struct out to a file when you don’t know where the padding will end up.
+
+    // How do we fix this? Hold that thought—we’ll look at some ways to do this after looking at another related problem.
+
+    // Numbers!
+
+    // Turns out all architectures don’t represent numbers in memory the same way.
+
+    // Let’s look at a simple fwrite() of a 2-byte number. We’ll write it in hex so each byte is clear. The most significant byte will have the value 0x12 and the least significant will have the value 0x34.
+
+    // unsigned short v = 0x1234;  // Two bytes, 0x12 and 0x34
+
+    // fwrite(&v, sizeof v, 1, fp);
+    // What ends up in the stream?
+
+    // Well, it seems like it should be 0x12 followed by 0x34, right?
+
+    // But if I run this on my machine and hex dump the result, I get:
+
+    // 34 12
+    // They’re reversed! What gives?
+
+    // This has something to do with what’s called the endianess80 of the architecture. Some write the most significant bytes first, and some the least significant bytes first.
+
+    // This means that if you write a multibyte number out straight from memory, you can’t do it in a portable way81.
+
+    // A similar problem exists with floating point. Most systems use the same format for their floating point numbers, but some do not. No guarantees!
+
+    // So… how can we fix all these problems with numbers and structs to get our data written in a portable way?
+
+    // The summary is to serialize the data, which is a general term that means to take all the data and write it out in a format that you control, that is well-known, and programmable to work the same way on all platforms.
+
+    // As you might imagine, this is a solved problem. There are a bunch of serialization libraries you can take advantage of, such as Google’s protocol buffers82, out there and ready to use. They will take care of all the gritty details for you, and even will allow data from your C programs to interoperate with other languages that support the same serialization methods.
+
+    // Do yourself and everyone a favor! Serialize your binary data when you write it to a stream! This will keep things nice and portable, even if you transfer data files from one architecture to another.
 }
