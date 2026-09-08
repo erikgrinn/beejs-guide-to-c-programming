@@ -112,4 +112,71 @@ int main(void)
         printf("%d: %s", ++linecount, s1);
 
     fclose(fp1);
+
+    //     9.4 Formatted Input
+    // You know how you can get formatted output with printf() (and, thus, fprintf() like we’ll see, below)?
+
+    // You can do the same thing with fscanf().
+
+    // Before we start, you should be advised that using scanf()-style functions can be hazardous with untrusted input. If you don’t specify field widths with your %s, you could overflow the buffer. Worse, invalid numeric conversion result in undefined behavior. The safe thing to do with untrusted input is to use %s with a field width, then use functions like strtol() or strtod() to do the conversions.
+
+    // Let’s have a file with a series of data records in it. In this case, whales, with name, length in meters, and weight in tonnes. whales.txt:
+
+    // blue 29.9 173
+    // right 20.7 135
+    // gray 14.9 41
+    // humpback 16.0 30
+
+    //     Yes, we could read these with fgets() and then parse the string with sscanf() (and in that’s more resilient against corrupted files), but in this case, let’s just use fscanf() and pull it in directly.
+
+    // The fscanf() function skips leading whitespace when reading, and returns EOF on end-of-file or error.
+
+    FILE *fp2;
+    char name[1024]; // Big enough for any line this program will encounter
+    float length;
+    int mass;
+
+    fp2 = fopen("whales.txt", "r");
+
+    while (fscanf(fp2, "%s %f %d", name, &length, &mass) != EOF)
+        printf("%s whale, %d tonnes, %.1f meters\n", name, mass, length);
+
+    fclose(fp2);
+
+    // Which gives the result:
+
+    // blue whale, 173 tonnes, 29.9 meters
+    // right whale, 135 tonnes, 20.7 meters
+    // gray whale, 41 tonnes, 14.9 meters
+    // humpback whale, 30 tonnes, 16.0 meters
+
+    // 9.5 Writing Text Files
+    // In much the same way we can use fgetc(), fgets(), and fscanf() to read text streams, we can use fputc(), fputs(), and fprintf() to write text streams.
+
+    // To do so, we have to fopen() the file in write mode by passing "w" as the second argument. Opening an existing file in "w" mode will instantly truncate that file to 0 bytes for a full overwrite.
+
+    // We’ll put together a simple program that outputs a file output.txt using a variety of output functions.
+
+    FILE *fp3;
+    int x = 32;
+
+    fp3 = fopen("output.txt", "w");
+    // fp3 = stdout; // for console instead (remember linux is file-based)
+
+    fputc('B', fp3);
+    fputc('\n', fp3); // newline
+    fprintf(fp3, "x = %d\n", x);
+    fputs("Hello, world!\n", fp3);
+
+    fclose(fp3);
+
+    //  And this produces a file, output.txt, with these contents:
+
+    // B
+    // x = 32
+    // Hello, world!
+
+    // Fun fact: since stdout is a file, you could replace line 8 with:
+    // fp = stdout;
+    // and the program would have outputted to the console instead of to a file. Try it!
 }
